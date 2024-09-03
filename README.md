@@ -1,13 +1,28 @@
-<img alt="preview" src="https://github.com/rikodot/binja_native_sigscan/blob/main/preview.gif" width="800">
 
-### Plugin now available in Binary Ninja's plugin manager
-(allows to receive updates automatically)<br>
-<img alt="plugin" src="https://github.com/rikodot/binja_native_sigscan/blob/main/plugin.jpg" width="800">
+# binja native sigscan
 
-### Extra features:
-- option to use custom wildcard when dealing with NORM signatures (credit: [@c0dycode](https://github.com/c0dycode))
+a native signature creator and scanner based on [rikodot's plugin](https://github.com/rikodot/binja_native_sigscan/).
 
-#### if there has been an update to Binary Ninja and this plugin has not been updated yet, please open an issue to alert me
+## build process
+
+first, checkout [binaryninja-api](https://github.com/Vector35/binaryninja-api) for your binary ninja version, with the commit id from `/path/to/binja/api_REVISION.txt`.
+
+for example:
+```sh
+git clone https://github.com/Vector35/binaryninja-api --recurse-submodules
+cd binaryninja-api
+git reset --hard <revision>
+```
+
+then, build the plugin:
+```sh
+cmake -B <build-dir> -DBN_API_PATH=<path_to_binaryninja_api>
+cmake --build <build-dir>
+```
+
+this will produce a library in `./<build-dir>/out/bin/` which should be copied to your plugin directory.
+
+## features
 
 ### Functional improvements against [Binary Ninja python sigmaker plugin](https://github.com/apekros/binja_sigmaker):
 - signature finding:
@@ -45,24 +60,6 @@
   1. select a piece of code within the main frame in `Linear` or `Graph` view
   2. right click into the main frame or use topbar navigation `Plugins->Create <type> sig from range`
   3. signature is written into the log bar (on windows also copied directly to the clipboard), if you want to copy previously created signature, simply find it in the log bar, right click it and hit copy to avoid recreating it or use Ctrl+C shortcut
-
-### Build process
-1. get git link to currently installed version from `C:\Program Files\Vector35\BinaryNinja\api_REVISION.txt` (in my case, at the time of creating this repository, it is `https://github.com/Vector35/binaryninja-api/tree/d2e0420679ad9cfc0a25ccf768cdfef7bb14c978`)
-2. clone and build (change the hash in `git reset` command)
-```bash
-git clone https://github.com/Vector35/binaryninja-api --recurse-submodules
-cd binaryninja-api
-git reset --hard d2e0420679ad9cfc0a25ccf768cdfef7bb14c978
-cd examples
-git clone https://github.com/rikodot/binja_native_sigscan
-cd binja_native_sigscan
-cmake -S . -B build
-```
-3. launch newly generated Visual Studio .sln project located in (...\binaryninja-api\examples\binja_native_sigscan\build\) and build the project or use `cmake --build build -j8` instead
-4. to load the plugin, copy compiled binary into the plugins folder
-   - on windows `copy ".\build\Release\sigscan.dll" "%appdata%\Binary Ninja\plugins\sigscan.dll"`
-   - on linux `cp ./build/out/bin/libsigscan.so ~/.binaryninja/plugins/libsigscan.so`
-- you need to have same Binary Ninja version installed as the API version you are compiling
 
 ### Building using Github Actions
 - based on [sample_plugin_cpp](https://github.com/Vector35/sample_plugin_cpp)
