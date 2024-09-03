@@ -179,7 +179,7 @@ bool set_clipboard_text(const std::string& text)
 enum sig_types
 {
 	NORM,
-	CODE
+	CODE,
 };
 
 void create_sig(BinaryView* view, uint64_t start, uint64_t length, sig_types type)
@@ -476,15 +476,15 @@ extern "C"
 		PluginCommand::RegisterForRange("Native SigScan\\Create NORM sig from range",
 			"Create SIGNATURE IN FORMAT '49 28 15 ? ? 30'.",
 			[](BinaryView* view, uint64_t start, uint64_t length) { create_sig(view, start, length, NORM); });
-		PluginCommand::RegisterForRange("Native SigScan\\Create CODE sig from range",
-			"Create SIGNATURE IN FORMAT '\"\\x49\\x28\\x15\\x00\\x00\\x30\", \"xxx??x\"'.",
-			[](BinaryView* view, uint64_t start, uint64_t length) { create_sig(view, start, length, CODE); });
+		// PluginCommand::RegisterForRange("Native SigScan\\Create CODE sig from range",
+		// 	"Create SIGNATURE IN FORMAT '\"\\x49\\x28\\x15\\x00\\x00\\x30\", \"xxx??x\"'.",
+		// 	[](BinaryView* view, uint64_t start, uint64_t length) { create_sig(view, start, length, CODE); });
 		PluginCommand::Register("Native SigScan\\Find NORM sig",
 			"Find SIGNATURE in current binary (FORMAT '49 28 15 ? ? 30').",
 			[](BinaryView* view) { find_sig(view, NORM); });
-		PluginCommand::Register("Native SigScan\\Find CODE sig",
-			"Find SIGNATURE in current binary (FORMAT '\"\\x49\\x28\\x15\\x00\\x00\\x30\", \"xxx??x\"').",
-			[](BinaryView* view) { find_sig(view, CODE); });
+		// PluginCommand::Register("Native SigScan\\Find CODE sig",
+		// 	"Find SIGNATURE in current binary (FORMAT '\"\\x49\\x28\\x15\\x00\\x00\\x30\", \"xxx??x\"').",
+		// 	[](BinaryView* view) { find_sig(view, CODE); });
 
 	    auto settings = Settings::Instance();
 		settings->RegisterGroup("nativeSigScan", "Native SigScan");
@@ -492,7 +492,7 @@ extern "C"
 			R"~({
                         "title": "Custom wildcard",
                         "type": "string",
-                        "default": "?",
+                        "default": "??",
 	                    "description": "Wildcard character(s) used when creating NORM patterns."
 	                    })~");
 		settings->RegisterSetting("nativeSigScan.inNormSigScanCustomWildcard",
