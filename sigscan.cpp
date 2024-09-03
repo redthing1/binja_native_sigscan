@@ -6,6 +6,7 @@
 using namespace BinaryNinja;
 
 #define PLUGIN_NAME "Native SigScan"
+#define PLUGIN_ID "nativeSigScan"
 
 #define WILD_BYTE -1 // used to identify wild byte when searching for a signature
 
@@ -39,7 +40,7 @@ void instruction_to_sig(BinaryView* bv, uint64_t addr, size_t inst_length, std::
 	std::stringstream& sigStream, bool allow_custom_wildcard)
 {
 	const std::string wildcard =
-		allow_custom_wildcard ? Settings::Instance()->Get<std::string>("nativeSigScan.normSigCustomWildcard") : "?";
+		allow_custom_wildcard ? Settings::Instance()->Get<std::string>(PLUGIN_ID ".normSigCustomWildcard") : "?";
     
 	auto br = BinaryReader(bv);
 	br.Seek(addr);
@@ -277,7 +278,7 @@ std::string exctract_sig(std::string str, sig_types type, bool scan_for_custom_w
 		//replace custom wildcards with question marks
 		if (scan_for_custom_wildcard)
 		{
-			std::string custom_wildcard = Settings::Instance()->Get<std::string>("nativeSigScan.normSigCustomWildcard");
+			std::string custom_wildcard = Settings::Instance()->Get<std::string>(PLUGIN_ID ".normSigCustomWildcard");
 			replace_all(str, custom_wildcard, "?");
 		}
 
@@ -397,8 +398,8 @@ void find_sig(BinaryView* view, sig_types type)
 	// Log(InfoLog, "input_data: %s", input_data.c_str());
 
 	const std::string sig = exctract_sig(input_data, type,
-		type == NORM && Settings::Instance()->Get<bool>("nativeSigScan.inNormSigScanCustomWildcard")
-			&& Settings::Instance()->Get<std::string>("nativeSigScan.normSigCustomWildcard") != "?");
+		type == NORM && Settings::Instance()->Get<bool>(PLUGIN_ID ".inNormSigScanCustomWildcard")
+			&& Settings::Instance()->Get<std::string>(PLUGIN_ID ".normSigCustomWildcard") != "?");
 
 	if (sig.empty())
 	{
@@ -467,7 +468,7 @@ void find_sig(BinaryView* view, sig_types type)
 		}
 	}
 
-	if (Settings::Instance()->Get<bool>("nativeSigScan.navigateToNextResultAfterSearch") && next_found_at != -1)
+	if (Settings::Instance()->Get<bool>(PLUGIN_ID ".navigateToNextResultAfterSearch") && next_found_at != -1)
 	{
 		view->Navigate(view->GetFile()->GetCurrentView(), next_found_at);
 	}
@@ -481,36 +482,30 @@ extern "C"
 
 	BINARYNINJAPLUGIN bool CorePluginInit()
 	{
-		PluginCommand::RegisterForRange("Native SigScan\\Create NORM sig from range",
-			"Create SIGNATURE IN FORMAT '49 28 15 ? ? 30'.",
+		PluginCommand::RegisterForRange(PLUGIN_NAME "\\Create Signature",
+			"Create signature for current selection.",
 			[](BinaryView* view, uint64_t start, uint64_t length) { create_sig(view, start, length, NORM); });
-		// PluginCommand::RegisterForRange("Native SigScan\\Create CODE sig from range",
-		// 	"Create SIGNATURE IN FORMAT '\"\\x49\\x28\\x15\\x00\\x00\\x30\", \"xxx??x\"'.",
-		// 	[](BinaryView* view, uint64_t start, uint64_t length) { create_sig(view, start, length, CODE); });
-		PluginCommand::Register("Native SigScan\\Find NORM sig",
-			"Find SIGNATURE in current binary (FORMAT '49 28 15 ? ? 30').",
+		PluginCommand::Register(PLUGIN_NAME "\\Find Signature",
+			"Find signature in current binary.",
 			[](BinaryView* view) { find_sig(view, NORM); });
-		// PluginCommand::Register("Native SigScan\\Find CODE sig",
-		// 	"Find SIGNATURE in current binary (FORMAT '\"\\x49\\x28\\x15\\x00\\x00\\x30\", \"xxx??x\"').",
-		// 	[](BinaryView* view) { find_sig(view, CODE); });
 
 	    auto settings = Settings::Instance();
-		settings->RegisterGroup("nativeSigScan", PLUGIN_NAME);
-		settings->RegisterSetting("nativeSigScan.normSigCustomWildcard",
+		settings->RegisterGroup(PLUGIN_ID "", PLUGIN_NAME);
+		settings->RegisterSetting(PLUGIN_ID ".normSigCustomWildcard",
 			R"~({
                         "title": "Custom wildcard",
                         "type": "string",
                         "default": "??",
 	                    "description": "Wildcard character(s) used when creating NORM patterns."
 	                    })~");
-		settings->RegisterSetting("nativeSigScan.inNormSigScanCustomWildcard",
+		settings->RegisterSetting(PLUGIN_ID ".inNormSigScanCustomWildcard",
 			R"~({
                         "title": "Scan for custom wildcard",
                         "type": "boolean",
                         "default": true,
 	                    "description": "Option to scan for custom wildcards when finding NORM patterns (only used if default wildcard is changed), ideally should be set to false if custom wildcard can be a regular byte found in disassembly (0x00-0xFF)."
 	                    })~");
-		settings->RegisterSetting("nativeSigScan.navigateToNextResultAfterSearch",
+		settings->RegisterSetting(PLUGIN_ID ".navigateToNextResultAfterSearch",
 			R"~({
                         "title": "Navigate to the closest result",
                         "type": "boolean",
@@ -518,7 +513,7 @@ extern "C"
 	                    "description": "Option to automatically navigate the current view to the closest result relative to the current offset (goes for the closest greater offset or the closest smaller if no greater found)."
 	                    })~");
 	    
-		Log(InfoLog, "BINJA NATIVE SIGSCAN LOADED");
+		Log(InfoLog, PLUGIN_NAME " loaded");
 		return true;
 	}
 }
