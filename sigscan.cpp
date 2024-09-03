@@ -445,7 +445,7 @@ void find_sig(BinaryView* view, sig_types type)
 
 	logger->Log(InfoLog, "-- SIGSCAN FIND START --");
 	uint64_t scan_start = bin_start;
-	uint64_t next_found_at = NULL;
+	int64_t next_found_at = -1;
 	bool next_found = false;
 	while (true)
 	{
@@ -467,7 +467,7 @@ void find_sig(BinaryView* view, sig_types type)
 		}
 	}
 
-	if (Settings::Instance()->Get<bool>("nativeSigScan.navigateToNextResultAfterSearch") && next_found_at != NULL)
+	if (Settings::Instance()->Get<bool>("nativeSigScan.navigateToNextResultAfterSearch") && next_found_at != -1)
 	{
 		view->Navigate(view->GetFile()->GetCurrentView(), next_found_at);
 	}
