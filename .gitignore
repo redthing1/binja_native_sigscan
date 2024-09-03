@@ -1,4 +1,7 @@
 .git
-build
+build/
+build-*/
 preview.gif
 .vscode
+
+binaryninja-api

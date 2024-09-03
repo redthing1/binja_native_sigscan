@@ -6,12 +6,24 @@ add_library(${PROJECT_NAME} SHARED
     sigscan.cpp)
     
 set(HEADLESS 1)
+
+# Require BN_API_PATH to be set
+if(NOT DEFINED BN_API_PATH)
+    message(FATAL_ERROR "BN_API_PATH is not set. Please specify the path to the Binary Ninja API using -DBN_API_PATH=/path/to/binaryninja/api")
+endif()
+
 find_path(
-    BN_API_PATH
+    BN_API_INCLUDE_PATH
     NAMES binaryninjaapi.h
-    HINTS ../.. binaryninjaapi $ENV{BN_API_PATH}
+    PATHS ${BN_API_PATH}
     REQUIRED
+    NO_DEFAULT_PATH
 )
+
+if(NOT BN_API_INCLUDE_PATH)
+    message(FATAL_ERROR "Binary Ninja API not found at the specified path. Please check the value of BN_API_PATH.")
+endif()
+
 add_subdirectory(${BN_API_PATH} api)
 
 target_link_libraries(${PROJECT_NAME}
