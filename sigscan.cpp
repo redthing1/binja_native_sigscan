@@ -5,6 +5,8 @@
 
 using namespace BinaryNinja;
 
+#define PLUGIN_NAME "Native SigScan"
+
 #define WILD_BYTE -1 // used to identify wild byte when searching for a signature
 
 // converts string signature to array of bytes
@@ -37,7 +39,7 @@ void instruction_to_sig(BinaryView* bv, uint64_t addr, size_t inst_length, std::
 	std::stringstream& sigStream, bool allow_custom_wildcard)
 {
 	const std::string wildcard =
-		allow_custom_wildcard ? Settings::Instance()->Get<std::string>("nativeSigScan.outNormSigWildcard") : "?";
+		allow_custom_wildcard ? Settings::Instance()->Get<std::string>("nativeSigScan.normSigCustomWildcard") : "?";
     
 	auto br = BinaryReader(bv);
 	br.Seek(addr);
@@ -184,9 +186,12 @@ enum sig_types
 
 void create_sig(BinaryView* view, uint64_t start, uint64_t length, sig_types type)
 {
+	auto session_id = view->GetFile()->GetSessionId();
+	auto logger = LogRegistry::CreateLogger(PLUGIN_NAME, session_id);
+
 	if (view->GetCurrentView().find("Raw") != std::string::npos || view->GetCurrentView().find("Hex") != std::string::npos)
 	{
-        Log(ErrorLog, "CANNOT CREATE SIG FROM RAW OR HEX VIEW");
+        logger->Log(ErrorLog, "CANNOT CREATE SIG FROM RAW OR HEX VIEW");
         return;
     }
 
@@ -250,7 +255,7 @@ void create_sig(BinaryView* view, uint64_t start, uint64_t length, sig_types typ
 #endif
 
 	if (!instruction_parsing) { pattern += " [RAW BYTES - NO WILDCARDS]"; }
-	Log(instruction_parsing ? InfoLog : WarningLog, "%s", pattern.c_str());
+	logger->Log(instruction_parsing ? InfoLog : WarningLog, "%s", pattern.c_str());
 }
 
 void replace_all(std::string& str, const std::string& from, const std::string& to)
@@ -272,7 +277,7 @@ std::string exctract_sig(std::string str, sig_types type, bool scan_for_custom_w
 		//replace custom wildcards with question marks
 		if (scan_for_custom_wildcard)
 		{
-			std::string custom_wildcard = Settings::Instance()->Get<std::string>("nativeSigScan.outNormSigWildcard");
+			std::string custom_wildcard = Settings::Instance()->Get<std::string>("nativeSigScan.normSigCustomWildcard");
 			replace_all(str, custom_wildcard, "?");
 		}
 
@@ -374,27 +379,30 @@ std::string exctract_sig(std::string str, sig_types type, bool scan_for_custom_w
 
 void find_sig(BinaryView* view, sig_types type)
 {
+	auto session_id = view->GetFile()->GetSessionId();
+	auto logger = LogRegistry::CreateLogger(PLUGIN_NAME, session_id);
+
 	std::string input_data /*= get_clipboard_text()*/;
-	if (!GetTextLineInput(input_data, "Enter signature to find", "Native SigScan"))
+	if (!GetTextLineInput(input_data, "Enter signature to find", PLUGIN_NAME))
 	{
-		Log(ErrorLog, "FAILED TO GRAB INPUT");
+		logger->Log(ErrorLog, "FAILED TO GRAB INPUT");
 		return;
 	}
 
 	if (input_data.empty())
 	{
-		Log(ErrorLog, "INPUT DOES NOT CONTAIN ANY TEXT");
+		logger->Log(ErrorLog, "INPUT DOES NOT CONTAIN ANY TEXT");
 		return;
 	}
 	// Log(InfoLog, "input_data: %s", input_data.c_str());
 
 	const std::string sig = exctract_sig(input_data, type,
 		type == NORM && Settings::Instance()->Get<bool>("nativeSigScan.inNormSigScanCustomWildcard")
-			&& Settings::Instance()->Get<std::string>("nativeSigScan.outNormSigWildcard") != "?");
+			&& Settings::Instance()->Get<std::string>("nativeSigScan.normSigCustomWildcard") != "?");
 
 	if (sig.empty())
 	{
-		Log(ErrorLog, "INPUT IS NOT VALID SIG");
+		logger->Log(ErrorLog, "INPUT IS NOT VALID SIG");
 		return;
 	}
 	// Log(InfoLog, "sig: %s", sig.c_str());
@@ -435,7 +443,7 @@ void find_sig(BinaryView* view, sig_types type)
 		return found_start;
 	};
 
-	Log(InfoLog, "-- NATIVE SIGSCAN START --");
+	logger->Log(InfoLog, "-- SIGSCAN FIND START --");
 	uint64_t scan_start = bin_start;
 	uint64_t next_found_at = NULL;
 	bool next_found = false;
@@ -445,7 +453,7 @@ void find_sig(BinaryView* view, sig_types type)
 		uint64_t found_at = finder(j, scan_start);
 		if (j >= target_bytes.size())
 		{
-			Log(InfoLog, "FOUND SIG AT 0x%llx", found_at);
+			logger->Log(InfoLog, "FOUND SIG AT 0x%llx", found_at);
 			scan_start = found_at + 1;
 			if (!next_found)
 			{
@@ -464,7 +472,7 @@ void find_sig(BinaryView* view, sig_types type)
 		view->Navigate(view->GetFile()->GetCurrentView(), next_found_at);
 	}
 
-	Log(InfoLog, "-- NATIVE SIGSCAN END --");
+	logger->Log(InfoLog, "-- SIGSCAN FIND END --");
 }
 
 extern "C"
@@ -487,8 +495,8 @@ extern "C"
 		// 	[](BinaryView* view) { find_sig(view, CODE); });
 
 	    auto settings = Settings::Instance();
-		settings->RegisterGroup("nativeSigScan", "Native SigScan");
-		settings->RegisterSetting("nativeSigScan.outNormSigWildcard",
+		settings->RegisterGroup("nativeSigScan", PLUGIN_NAME);
+		settings->RegisterSetting("nativeSigScan.normSigCustomWildcard",
 			R"~({
                         "title": "Custom wildcard",
                         "type": "string",
