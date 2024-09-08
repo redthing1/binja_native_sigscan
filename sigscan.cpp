@@ -31,9 +31,9 @@ std::vector<int> parse_hex_string(const std::string& input) {
 
 // converts single instruction to a signature, determines whether each byte should preserved as is or replaced with a
 // wild byte enhanced & fixed version of community binja python sigmaker plugin, for more information check readme
-void instruction_to_sig(
+void instruction_to_signature(
     BinaryView* bv, uint64_t addr, size_t inst_length, std::vector<BNConstantReference> consts,
-    std::stringstream& sigStream, bool allow_custom_wildcard
+    std::stringstream& sig_stream, bool allow_custom_wildcard
 ) {
   const std::string wildcard =
       allow_custom_wildcard ? Settings::Instance()->Get<std::string>(PLUGIN_ID ".normSigCustomWildcard") : "?";
@@ -43,7 +43,7 @@ void instruction_to_sig(
 
   if (consts.empty()) {
     while (inst_length--) {
-      sigStream << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
+      sig_stream << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
                 << static_cast<unsigned int>(br.Read8()) << " ";
     }
   } else {
@@ -68,10 +68,10 @@ void instruction_to_sig(
 
     br.Seek(addr);
     for (size_t x = 0; x < inst_length - new_delta; ++x) {
-      sigStream << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (unsigned int) br.Read8() << " ";
+      sig_stream << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (unsigned int) br.Read8() << " ";
     }
     for (int x = 0; x < new_delta; ++x) {
-      sigStream << wildcard << " ";
+      sig_stream << wildcard << " ";
     }
   }
 }
@@ -154,7 +154,7 @@ enum sig_types {
   CODE,
 };
 
-void create_sig(BinaryView* view, uint64_t start, uint64_t length, sig_types type) {
+void create_signature(BinaryView* view, uint64_t start, uint64_t length, sig_types type) {
   auto session_id = view->GetFile()->GetSessionId();
   auto logger = LogRegistry::CreateLogger(PLUGIN_NAME, session_id);
 
@@ -174,13 +174,13 @@ void create_sig(BinaryView* view, uint64_t start, uint64_t length, sig_types typ
       const auto consts = func->GetConstantsReferencedByInstruction(func->GetArchitecture(), start);
       const auto inst_length = view->GetInstructionLength(func->GetArchitecture(), start);
 
-      instruction_to_sig(view, start, inst_length, consts, sig_stream, type == NORM);
+      instruction_to_signature(view, start, inst_length, consts, sig_stream, type == NORM);
 
       start += inst_length;
       length -= inst_length;
     }
   } else {
-    instruction_to_sig(view, start, length, {}, sig_stream, type == NORM);
+    instruction_to_signature(view, start, length, {}, sig_stream, type == NORM);
   }
 
   pattern = std::string{sig_stream.str().substr(0, sig_stream.str().size() - 1)};
@@ -231,7 +231,7 @@ void replace_all(std::string& str, const std::string& from, const std::string& t
   }
 }
 
-std::string exctract_sig(std::string str, sig_types type, bool scan_for_custom_wildcard) {
+std::string extract_signature(std::string str, sig_types type, bool scan_for_custom_wildcard) {
   std::string sig;
   if (type == NORM) {
     // replace custom wildcards with question marks
@@ -318,7 +318,7 @@ std::string exctract_sig(std::string str, sig_types type, bool scan_for_custom_w
   return sig;
 }
 
-void find_sig(BinaryView* view, sig_types type) {
+void search_for_signature(BinaryView* view, sig_types type) {
   auto session_id = view->GetFile()->GetSessionId();
   auto logger = LogRegistry::CreateLogger(PLUGIN_NAME, session_id);
 
@@ -334,7 +334,7 @@ void find_sig(BinaryView* view, sig_types type) {
   }
   // Log(InfoLog, "input_data: %s", input_data.c_str());
 
-  const std::string sig = exctract_sig(
+  const std::string sig = extract_signature(
       input_data, type,
       type == NORM && Settings::Instance()->Get<bool>(PLUGIN_ID ".inNormSigScanCustomWildcard") &&
           Settings::Instance()->Get<std::string>(PLUGIN_ID ".normSigCustomWildcard") != "?"
@@ -411,10 +411,10 @@ BN_DECLARE_CORE_ABI_VERSION
 BINARYNINJAPLUGIN bool CorePluginInit() {
   PluginCommand::RegisterForRange(
       PLUGIN_NAME "\\Create Signature", "Create signature for current selection.",
-      [](BinaryView* view, uint64_t start, uint64_t length) { create_sig(view, start, length, NORM); }
+      [](BinaryView* view, uint64_t start, uint64_t length) { create_signature(view, start, length, NORM); }
   );
   PluginCommand::Register(PLUGIN_NAME "\\Find Signature", "Find signature in current binary.", [](BinaryView* view) {
-    find_sig(view, NORM);
+    search_for_signature(view, NORM);
   });
 
   auto settings = Settings::Instance();
