@@ -43,7 +43,7 @@ void instruction_to_signature(
 
   if (consts.empty()) {
     while (inst_length--) {
-      sig_stream << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
+      sig_stream << std::hex << std::setw(2) << std::setfill('0')
                 << static_cast<unsigned int>(br.Read8()) << " ";
     }
   } else {
@@ -68,7 +68,7 @@ void instruction_to_signature(
 
     br.Seek(addr);
     for (size_t x = 0; x < inst_length - new_delta; ++x) {
-      sig_stream << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (unsigned int) br.Read8() << " ";
+      sig_stream << std::hex << std::setw(2) << std::setfill('0') << (unsigned int) br.Read8() << " ";
     }
     for (int x = 0; x < new_delta; ++x) {
       sig_stream << wildcard << " ";
