@@ -76,79 +76,6 @@ void instruction_to_signature(
   }
 }
 
-#ifdef WIN32
-std::string get_clipboard_text() {
-  if (!::OpenClipboard(nullptr)) {
-    LogError("Failed to open clipboard");
-    return std::string{};
-  }
-
-  HANDLE hData = ::GetClipboardData(CF_TEXT);
-  if (!hData) {
-    ::CloseClipboard();
-    LogError("Failed to get clipboard data");
-    return std::string{};
-  }
-
-  char* pszText = static_cast<char*>(::GlobalLock(hData));
-  if (!pszText) {
-    ::GlobalUnlock(hData);
-    ::CloseClipboard();
-    LogError("Failed to extract clipboard data");
-    return std::string{};
-  }
-
-  std::string clipboard_data(pszText);
-
-  ::GlobalUnlock(hData);
-
-  ::CloseClipboard();
-  return clipboard_data;
-}
-
-bool set_clipboard_text(const std::string& text) {
-  if (!::OpenClipboard(nullptr)) {
-    LogError("Failed to open clipboard");
-    return false;
-  }
-
-  if (!::EmptyClipboard()) {
-    ::CloseClipboard();
-    LogError("Failed to empty clipboard");
-    return false;
-  }
-
-  HGLOBAL hData = ::GlobalAlloc(GMEM_MOVEABLE, (text.length() + 1) * sizeof(char));
-  if (!hData) {
-    ::CloseClipboard();
-    LogError("Failed to allocate memory for clipboard data");
-    return false;
-  }
-
-  char* pszText = static_cast<char*>(::GlobalLock(hData));
-  if (!pszText) {
-    ::GlobalFree(hData);
-    ::CloseClipboard();
-    LogError("Failed to lock memory for clipboard data");
-    return false;
-  }
-
-  std::strcpy(pszText, text.c_str());
-
-  ::GlobalUnlock(hData);
-
-  if (!::SetClipboardData(CF_TEXT, hData)) {
-    ::GlobalFree(hData);
-    ::CloseClipboard();
-    LogError("Failed to set clipboard data");
-    return false;
-  }
-
-  ::CloseClipboard();
-  return true;
-}
-#endif
-
 enum sig_types {
   NORM,
   CODE,
@@ -207,12 +134,6 @@ void create_signature(BinaryView* view, uint64_t start, uint64_t length, sig_typ
     }
     pattern = "\"\\x" + pattern + "\", \"" + mask + "\"";
   }
-
-#ifdef WIN32
-  if (!set_clipboard_text(pattern)) {
-    LogError("Failed to copy sig to clipboard");
-  }
-#endif
 
   if (!instruction_parsing) {
     pattern += " [RAW BYTES - NO WILDCARDS]";
