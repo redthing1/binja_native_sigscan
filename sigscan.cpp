@@ -83,7 +83,10 @@ void instruction_to_signature(
     if (new_delta > inst_length) {
       new_delta = inst_length;
       auto log = bv->CreateLogger(PLUGIN_NAME);
-      log->Log(ErrorLog, "invalid new_delta value, setting to %d", inst_length);
+      std::stringstream ss;
+      ss << "invalid new_delta value processing instruction @ 0x" << std::hex << addr
+         << ", setting to inst_length=" << inst_length;
+      log->Log(ErrorLog, ss.str().c_str());
     }
 
     // seek back to the start of the instruction
