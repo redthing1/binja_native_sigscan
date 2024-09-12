@@ -35,41 +35,59 @@ void instruction_to_signature(
     BinaryView* bv, uint64_t addr, size_t inst_length, std::vector<BNConstantReference> consts,
     std::stringstream& sig_stream, bool allow_custom_wildcard
 ) {
+  // determine the wildcard character to use
   const std::string wildcard =
       allow_custom_wildcard ? Settings::Instance()->Get<std::string>(PLUGIN_ID ".normSigCustomWildcard") : "?";
 
+  // create a binary reader and seek to the address of the instruction
   auto br = BinaryReader(bv);
   br.Seek(addr);
 
+  // if there are no constant references, simply output the entire instruction as hex bytes
   if (consts.empty()) {
     while (inst_length--) {
-      sig_stream << std::hex << std::setw(2) << std::setfill('0')
-                << static_cast<unsigned int>(br.Read8()) << " ";
+      // read each byte and output as a hex string
+      sig_stream << std::hex << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(br.Read8()) << " ";
     }
   } else {
+    // new_delta: how many bytes at the end should be wildcards
     int new_delta = 0;
+
+    // iterate through each constant reference
     for (const auto& cur_const : consts) {
       if (cur_const.pointer) {
+        // if it's a pointer, add 4 to new_delta (assuming 32-bit pointers)
         new_delta += 4;
       } else {
+        // if it's a value, first check if it matches the last 4 bytes
         int32_t four_bytes;
+        // read 4 bytes from the end of the instruction, offset by current new_delta
         bv->Read(&four_bytes, addr + inst_length - (new_delta + 4), sizeof(int32_t));
         if (cur_const.value == four_bytes) {
+          // if it matches, add 4 to new_delta
           new_delta += 4;
         } else {
+          // if 4-byte match fails, check if it matches the last byte
           int8_t one_byte;
+          // read 1 byte from the end of the instruction, offset by current new_delta
           bv->Read(&one_byte, addr + inst_length - (new_delta + 1), sizeof(int8_t));
           if (cur_const.value == one_byte) {
+            // if it matches, add 1 to new_delta
             new_delta += 1;
           }
         }
       }
     }
 
+    // seek back to the start of the instruction
     br.Seek(addr);
+
+    // output the non-wildcard part of the instruction as hex bytes
     for (size_t x = 0; x < inst_length - new_delta; ++x) {
       sig_stream << std::hex << std::setw(2) << std::setfill('0') << (unsigned int) br.Read8() << " ";
     }
+
+    // output wildcards for the remaining bytes
     for (int x = 0; x < new_delta; ++x) {
       sig_stream << wildcard << " ";
     }
