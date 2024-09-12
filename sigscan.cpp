@@ -79,6 +79,13 @@ void instruction_to_signature(
       }
     }
 
+    // ensure new_delta is valid
+    if (new_delta > inst_length) {
+      new_delta = inst_length;
+      auto log = bv->CreateLogger(PLUGIN_NAME);
+      log->Log(ErrorLog, "invalid new_delta value, setting to %d", inst_length);
+    }
+
     // seek back to the start of the instruction
     br.Seek(addr);
 
