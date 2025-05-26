@@ -5,22 +5,32 @@ a native signature creator and scanner based on [rikodot's plugin](https://githu
 
 ## build process
 
-first, checkout [binaryninja-api](https://github.com/Vector35/binaryninja-api) for your binary ninja version, with the commit id from `/path/to/binja/api_REVISION.txt`.
-
-for example:
+determine your binaryninja api version:
 ```sh
-git clone https://github.com/Vector35/binaryninja-api --recurse-submodules
-cd binaryninja-api
-git reset --hard <revision>
+# linux
+grep -oE '[0-9a-f]{40}' /path/to/binaryninja/api_REVISION.txt
+# macos
+grep -oE '[0-9a-f]{40}' /Applications/Binary\ Ninja.app/Contents/Resources/api_REVISION.txt
+# windows
+(Get-Content Path\To\BinaryNinja\api_REVISION.txt).Split('/')[-1].TrimEnd('%')
 ```
 
-then, build the plugin:
+get the api sources:
 ```sh
-cmake -B <build-dir> -DBN_API_PATH=<path_to_binaryninja_api>
-cmake --build <build-dir>
+python configure_api.py <revision>
 ```
 
-this will produce a library in `./<build-dir>/out/bin/` which should be copied to your plugin directory.
+setup build dir:
+```sh
+meson setup <build-dir>
+```
+
+build:
+```sh
+meson compile -C <build-dir>
+```
+
+then copy the built library to your binaryninja plugins dir.
 
 ## features
 

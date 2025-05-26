@@ -1,5 +1,0 @@
-option('bn_api_ver',
-  type : 'string',
-  value : 'dev',
-  description : 'Binary Ninja API Git commit/branch/tag to use.'
-)
