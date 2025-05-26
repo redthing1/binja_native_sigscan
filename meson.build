@@ -16,8 +16,18 @@ bnapi_subproj = cmake.subproject(
   'binaryninja-api',
   options : bn_headless_cmake_opt,
 )
+# message('CMake targets:\n - ' + '\n - '.join(bnapi_subproj.target_list()))
 
 binaryninja_api_dep = bnapi_subproj.dependency('binaryninjaapi')
+binaryninja_fmt_dep = bnapi_subproj.dependency('fmt')
+binaryninja_ui_dep = bnapi_subproj.dependency('binaryninjaui')
+
+binaryninja_lib_deps = [
+  binaryninja_api_dep,
+  binaryninja_fmt_dep,
+  binaryninja_ui_dep,
+]
+
 message('Binaryninja API (CMake) dependency obtained.')
 
 subdir('src')

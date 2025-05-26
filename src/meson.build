@@ -10,7 +10,7 @@ plugin_cpp_args = [
 # build plugin as shared library
 shared_library(plugin_target_name,
   plugin_sources,
-  dependencies : [binaryninja_api_dep], # link against the binaryninja-api
+  dependencies : binaryninja_lib_deps,
   cpp_args : plugin_cpp_args,
   name_prefix : '', # don't add 'lib' prefix to the output library name
 )
