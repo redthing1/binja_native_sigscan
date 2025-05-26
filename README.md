@@ -5,15 +5,7 @@ a native signature creator and scanner based on [rikodot's plugin](https://githu
 
 ## build process
 
-determine your binaryninja api version:
-```sh
-# linux
-grep -oE '[0-9a-f]{40}' /path/to/binaryninja/api_REVISION.txt
-# macos
-grep -oE '[0-9a-f]{40}' /Applications/Binary\ Ninja.app/Contents/Resources/api_REVISION.txt
-# windows
-(Get-Content Path\To\BinaryNinja\api_REVISION.txt).Split('/')[-1].TrimEnd('%')
-```
+select a binaryninja [api tag](https://github.com/Vector35/binaryninja-api/tags).
 
 get the api sources:
 ```sh
