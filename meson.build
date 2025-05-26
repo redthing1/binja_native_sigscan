@@ -5,12 +5,19 @@ project('nativesigscan',
   meson_version : '>= 1.2.0',
 )
 
-bn_api_subproject_options = {}
-bn_api_subproject = subproject('binaryninja-api',
-  default_options : bn_api_subproject_options,
-  required : true
+# configure binaryninja api cmake project
+# https://mesonbuild.com/CMake-module.html
+cmake = import('cmake')
+
+bn_headless_cmake_opt = cmake.subproject_options()
+
+message('Configuring binaryninja-api subproject using CMake module...')
+bnapi_subproj = cmake.subproject(
+  'binaryninja-api',
+  options : bn_headless_cmake_opt,
 )
 
-binaryninja_api_dep = dependency('binaryninjaapi')
+binaryninja_api_dep = bnapi_subproj.dependency('binaryninjaapi')
+message('Binaryninja API (CMake) dependency obtained.')
 
 subdir('src')

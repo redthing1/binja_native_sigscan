@@ -1,19 +1,8 @@
-# binaryninja-api.wrap.in
-
 [wrap-git]
-# The URL of the binaryninja-api repository.
 url = https://github.com/Vector35/binaryninja-api.git
-
-# This placeholder will be replaced by the 'apicommit' Meson option
-# (e.g., a specific commit hash, branch name like 'dev', or tag like 'v3.5.4278').
 revision = @APICOMMIT@
-
-# Specifies the directory name within the build environment's subproject cache
-# where the binaryninja-api will be cloned.
 directory = binaryninja-api
+clone-recursive=true
 
 [provide]
-# This tells Meson that this subproject can satisfy a dependency named 'binaryninjaapi'.
-# This name is what binaryninja-api/meson.build registers via 'meson.override_dependency()',
-# allowing your plugin to simply use dependency('binaryninjaapi').
 dependency_names = binaryninjaapi
