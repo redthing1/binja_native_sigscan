@@ -1,8 +1,0 @@
-[wrap-git]
-url = https://github.com/Vector35/binaryninja-api.git
-revision = @APICOMMIT@
-directory = binaryninja-api
-clone-recursive=true
-
-[provide]
-dependency_names = binaryninjaapi

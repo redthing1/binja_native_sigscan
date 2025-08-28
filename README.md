@@ -3,26 +3,18 @@
 
 a native signature creator and scanner based on [rikodot's plugin](https://github.com/rikodot/binja_native_sigscan/).
 
-## build process
+## build
 
-select a binaryninja [api tag](https://github.com/Vector35/binaryninja-api/tags).
+the build system will automatically detect your binary ninja installation and use the correct api revision:
 
-get the api sources:
 ```sh
-python configure_api.py <revision>
+cmake -G Ninja -B <build-dir>
+cmake --build <build-dir> --parallel
 ```
 
-setup build dir:
-```sh
-meson setup <build-dir>
-```
+if auto-detection fails or you want to use a specific [api revision](https://github.com/Vector35/binaryninja-api/tags), you can pass `-DBINARYNINJA_API_REVISION=<commit_hash>`.
 
-build:
-```sh
-meson compile -C <build-dir>
-```
-
-then copy the built library to your binaryninja plugins dir.
+then copy the built library to your binary ninja plugins directory.
 
 ## features
 
